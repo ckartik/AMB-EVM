@@ -21,9 +21,9 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     
     env:
-      API_KEY=dbac3afc5a6b4e0aa7cf5a8c062e7a83
-      PRIV_KEY1=7791ae29538ae943a16b4eef559f9f9fdf9ffb7a2e15b196f136cb60945c3530
-      PRIV_KEY2=4a7c81129af5a1c0fa49893989cb24571ae32ac4ac92edf7df516c8611fa3bd3
+      API_KEY: dbac3afc5a6b4e0aa7cf5a8c062e7a83
+      PRIV_KEY1: 7791ae29538ae943a16b4eef559f9f9fdf9ffb7a2e15b196f136cb60945c3530
+      PRIV_KEY2: 4a7c81129af5a1c0fa49893989cb24571ae32ac4ac92edf7df516c8611fa3bd3
     steps:
     - uses: actions/checkout@v3
     - name: Use Node.js ${{ matrix.node-version }}
