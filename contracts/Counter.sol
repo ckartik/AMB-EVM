@@ -13,6 +13,8 @@ interface IAMB {
     function receive(address recipientContract, bytes calldata data) external;
 }
 
+
+// TODO(@ckartik): Emit events as well during additions to the queue
 contract Counter {
     IAMB AMB;
     address sendingCounter;
@@ -20,12 +22,13 @@ contract Counter {
     address public owner;
     uint256 counter;
 
-    constructor(IAMB _amb, address _sendingCounter, address _receivingCounter) {
+    constructor(IAMB _amb) {
        counter = 0;
        AMB = _amb;
-       owner = msg.sender
+       owner = msg.sender;
     }
 
+    // Modifier to ensure only owner can configure contract post-deployment
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
         // Underscore is a special character only used inside
@@ -34,29 +37,33 @@ contract Counter {
         _;
     }
 
-    function send() public { 
-        AMB.send(receivingCounter, abi.encodeWithSignature("increment()"));
-    }
 
     function setSendingCounter(address _sendingCounter) public onlyOwner { 
         sendingCounter = _sendingCounter;
-
     }
     
     function setReceivingCounter(address _receivingCounter) public onlyOwner {
        receivingCounter = _receivingCounter;
     }
 
-    function getSendingCounter() public view returns (address) {
-        return sendingCounter;
+    // Send leverages the AMB to send an encoded & signed call cross-chain 
+    // to increment a counter contract on the corresponding chain
+    //
+    // TODO(@ckartik): Possibly verify signature at the recieiving ABI?
+    function send() public { 
+        AMB.send(receivingCounter, abi.encodeWithSignature("increment()"));
     }
+
+    // function getSendingCounter() public view returns (address) {
+    //     return sendingCounter;
+    // }
 
     function getCount() public view returns (uint) {
         return counter;
     }
 
     function increment() public {
-        require(msg.sender == address(AMB), "UNIDENTIFIED_SENDER");
+        // require(msg.sender == address(AMB), "UNIDENTIFIED_SENDER");
         counter++;
     }
 }

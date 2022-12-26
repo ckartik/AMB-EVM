@@ -12,15 +12,13 @@ struct Message {
     address reciever;
     bytes callData;
 }
+
 interface IAMB {
     // Core implementation
     function send(address recipient, bytes calldata data) external;
     function receive(address recipientContract, bytes calldata data) external;
 }
 
-interface Counter {
-    function getSendingCounter() external returns (address) ;
-}
 
  // TODO(@ckartik): Make amb payable with a min fee.
 contract AMB {
@@ -30,6 +28,10 @@ contract AMB {
     constructor() { 
        TRUSTED_RELAYER = msg.sender;
     }
+
+    function getQueue() public view returns (Message[] memory) {
+        return queue;
+    }
     
     // Core implementation
     function send(address recipient, bytes calldata data) public {
@@ -37,7 +39,7 @@ contract AMB {
             sender: msg.sender, 
             reciever: recipient, 
             callData: data
-            }));
+        }));
     }
 
     function receive(Message calldata message) public {
