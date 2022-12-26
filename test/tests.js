@@ -35,7 +35,7 @@ describe("Counter", function () {
       await txn2.wait()
 
       // TODO(@ckartik): Make amb interface cleaner and also start using events
-      const data = (await amb.getQueue())[0]
+      const data = await amb.getQueueHead();
 
       // We ensure that the relayer will pick up from and increment to the same contract
       expect(data.sender).to.equal(data.reciever)
@@ -65,7 +65,7 @@ describe("Counter", function () {
       const txn3  = await counter.send({value: ethers.utils.parseUnits("0.0002", "ether")});
       await txn3.wait()
       // TODO(@ckartik): Make amb interface cleaner and also start using events
-      const data = (await amb.getQueue())[0]
+      const data = await amb.getQueueHead();
       // Increment directly
       expect(await counter2.getCount()).to.equal(0)
 
