@@ -58,15 +58,16 @@ describe("Counter", function () {
 
       const amb2 = await deployMessageBridge();
       const counter2 =  await deployCounter(amb2.address);
-      // set the recieving counter contract to itself for easy test
+
       const txn2 = await counter.setReceivingCounter(counter2.address);
       await txn2.wait()
+
       // Send Transaction to queue for external contract
       const txn3  = await counter.send({value: ethers.utils.parseUnits("0.0002", "ether")});
       await txn3.wait()
-      // TODO(@ckartik): Make amb interface cleaner and also start using events
+
       const data = await amb.getQueueHead();
-      // Increment directly
+
       expect(await counter2.getCount()).to.equal(0)
 
       // Increment through amb proxy
@@ -84,7 +85,7 @@ describe("Counter", function () {
       const amb2 = await deployMessageBridge();
       const counter2 =  await deployCounter(amb2.address);
 
-      // set the recieving counter contract to itself for easy test
+
       const txn1 = await counter.setReceivingCounter(counter2.address);
       await txn1.wait()
      
@@ -94,7 +95,7 @@ describe("Counter", function () {
 
       
 
-      // TODO(@ckartik): Make amb interface cleaner and also start using events
+
       const data = await amb.getQueueHead();
     
       expect(await counter2.getCount()).to.equal(0)
