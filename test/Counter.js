@@ -6,6 +6,7 @@ describe("Counter", function () {
   async function deployMessageBridge() {
     const AMB = await ethers.getContractFactory("AMB");
     const amb = await AMB.deploy();
+    console.log(`AMB contract deployed to ${amb.address}`)
 
     return amb
   }
@@ -14,6 +15,7 @@ describe("Counter", function () {
   async function deployCounter(bridgeAddress) {
     const Counter = await ethers.getContractFactory("Counter");
     const counter = await Counter.deploy(bridgeAddress);
+    console.log(`Counter contract deployed to ${counter.address}`)
 
     return counter
   }
@@ -30,7 +32,7 @@ describe("Counter", function () {
       await counter.setReceivingCounter(counter.address);
 
       // Send Transaction to queue for external contract
-      await counter.send();
+      await counter.send({value: ethers.utils.parseUnits("25", "gwei")});
 
       // TODO(@ckartik): Make amb interface cleaner and also start using events
       const data = (await amb.getQueue())[0]
@@ -58,7 +60,7 @@ describe("Counter", function () {
       await counter.setReceivingCounter(counter2.address);
 
       // Send Transaction to queue for external contract
-      await counter.send();
+      await counter.send({value: ethers.utils.parseUnits("25", "gwei")});
 
       // TODO(@ckartik): Make amb interface cleaner and also start using events
       const data = (await amb.getQueue())[0]

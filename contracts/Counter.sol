@@ -2,14 +2,14 @@
 pragma solidity ^0.8.9;
 
 // Uncomment this line to use console.log
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 // This contract will be deployed on both chains
 // We maintain the AMB to take in arbitray input for it's calldata.
 // TODO(@ckartik): Make amb payable with a min fee.
 interface IAMB {
     // Core implementation
-    function send(address recipient, bytes calldata data) external;
+    function send(address recipient, bytes calldata data) payable external;
     function receive(address recipientContract, bytes calldata data) external;
 }
 
@@ -21,22 +21,24 @@ contract Counter {
     address receivingCounter;
     address public owner;
     uint256 counter;
+    uint minFee;
 
     constructor(IAMB _amb) {
        counter = 0;
        AMB = _amb;
        owner = msg.sender;
+       minFee = 25 gwei;
     }
 
-    // Modifier to ensure only owner can configure contract post-deployment
+
     modifier onlyOwner() {
-        require(msg.sender == owner, "Not owner");
-        // Underscore is a special character only used inside
-        // a function modifier and it tells Solidity to
-        // execute the rest of the code.
+        require(msg.sender == owner, "NOT_OWNER");
         _;
     }
 
+    function getCount() public view returns (uint) {
+        return counter;
+    }
 
     function setSendingCounter(address _sendingCounter) public onlyOwner { 
         sendingCounter = _sendingCounter;
@@ -50,20 +52,16 @@ contract Counter {
     // to increment a counter contract on the corresponding chain
     //
     // TODO(@ckartik): Possibly verify signature at the recieiving ABI?
-    function send() public { 
-        AMB.send(receivingCounter, abi.encodeWithSignature("increment()"));
+    function send() public payable { 
+        require(msg.value >= minFee, "MIN_FEE_NOT_SATISFIED");
+        AMB.send{ value: minFee }(receivingCounter, abi.encodeWithSignature("increment()"));
     }
 
-    // function getSendingCounter() public view returns (address) {
-    //     return sendingCounter;
-    // }
 
-    function getCount() public view returns (uint) {
-        return counter;
-    }
-
+    // Design Decision: I've decided to avoid 
     function increment() public {
-        // require(msg.sender == address(AMB), "UNIDENTIFIED_SENDER");
+        console.log("Counter at %s is being incremented by %s", address(this), msg.sender);
+        // require(msg.sender == address(AMB) || msg.sender == owner, "UNIDENTIFIED_SENDER");
         counter++;
     }
 }
