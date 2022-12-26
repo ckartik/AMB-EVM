@@ -7,7 +7,7 @@
 API_KEY=<Infura-API-Key>
 PRIV_KEY1=<Relayer-Private-Key>
 PRIV_KEY2=<Message-Sender-DAPP-Private-Key>
-``
+```
 ### 2. Run the following commands:
 ```bash
 $ npm install
