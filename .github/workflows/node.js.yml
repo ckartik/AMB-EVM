@@ -33,7 +33,6 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'hardhat/package.json'
     
-    - run: cd sdk; npm install
-    - run: cd hardhat; npm install
-    - run: cd hardhat; npm ci
-    - run: cd hardhat; npm test
+    - run: npm install
+    - run: npm ci
+    - run: hardhat test
