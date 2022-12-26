@@ -1,5 +1,19 @@
 # AMBCC - Arbitrary Message Bridge for Cross-Chain communication
 
+## E2E testing on multiple contracts on Goreli
+
+### 1. Set up a .env file with:
+```bash
+API_KEY=<Infura-API-Key>
+PRIV_KEY1=<Relayer-Private-Key>
+PRIV_KEY2=<Message-Sender-DAPP-Private-Key>
+``
+### 2. Run the following commands:
+```bash
+$ npm install
+$ npx hardhat test
+```
+
 ## AMB
 - We developed a simple AMB that allows you to send arbitrary encoded commands cross-chain.
 - For example you can do the following to exectute a function on a contract at as targetAddress:
