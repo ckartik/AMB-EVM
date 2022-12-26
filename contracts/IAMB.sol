@@ -31,15 +31,16 @@ contract AMB {
     constructor() { 
        TRUSTED_RELAYER = msg.sender;
        OWNER = msg.sender;
-       minFee = 25 gwei;
-       payment = 20 gwei;
+       minFee = 0.0002 ether;
+       payment = 0.0001 ether;
     }
+
+    event MessageConsumed(address sender, address reciever, bytes callData);
 
     modifier onlyRelayer() {
         require(msg.sender == TRUSTED_RELAYER, "NOT_TRUSTED_RELAYER");
         _;
     }
-
     modifier onlyOwner() {
         require(msg.sender == OWNER, "NOT_OWNER");
         _;
@@ -53,27 +54,30 @@ contract AMB {
         TRUSTED_RELAYER = newRelayer;
     }
     
-    function consumeFromQueue() public onlyRelayer returns (Message memory){
+    function getQueueHead() public view onlyRelayer returns (Message memory) {
         require(queue.length > 0, "QUEUE_EMPTY");
-        
+        return queue[0];
+    }
+
+    function consumeFromQueue() public onlyRelayer returns (Message memory) {
+        require(queue.length > 0, "QUEUE_EMPTY");
+
         Message memory m;
         m = queue[0];
-        
-        delete queue[0];
-        
-        // Pay fee to relayer for consuming and executing message
-        payable(TRUSTED_RELAYER).transfer(payment);
 
+        delete queue[0];
+        payable(TRUSTED_RELAYER).transfer(payment);
+        console.log("Transfered %s to %s", payment, TRUSTED_RELAYER);
+        // console.log("I GET HERE!!!!");
+        emit MessageConsumed(m.sender, m.reciever, m.callData);
         return m;
     }
 
     // Core implementation
     // Make payable and add payment for 
-    function send(address recipient, bytes calldata data) public payable {
-        
+    function send(address recipient, bytes calldata data) public payable {        
         require(msg.value >= minFee, "NEED_MORE_ETHER_FOR_TXN");
 
-        // TODO(@ckartik): Figure out pricing mechanism here.
         queue.push(Message({
             sender: msg.sender, 
             reciever: recipient, 

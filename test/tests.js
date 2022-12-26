@@ -32,7 +32,7 @@ describe("Counter", function () {
       await counter.setReceivingCounter(counter.address);
 
       // Send Transaction to queue for external contract
-      await counter.send({value: ethers.utils.parseUnits("25", "gwei")});
+      await counter.send({value: ethers.utils.parseUnits("1", "ether")});
 
       // TODO(@ckartik): Make amb interface cleaner and also start using events
       const data = (await amb.getQueue())[0]
@@ -60,7 +60,7 @@ describe("Counter", function () {
       await counter.setReceivingCounter(counter2.address);
 
       // Send Transaction to queue for external contract
-      await counter.send({value: ethers.utils.parseUnits("25", "gwei")});
+      await counter.send({value: ethers.utils.parseUnits("0.0002", "ether")});
 
       // TODO(@ckartik): Make amb interface cleaner and also start using events
       const data = (await amb.getQueue())[0]
@@ -70,6 +70,40 @@ describe("Counter", function () {
       // Increment through amb proxy
       await amb2.receive(data)
       expect(await counter2.getCount()).to.equal(1)
+    });
+
+    it("Should send proxy message through amb on the same chain and but different contract and get paid", async function () {
+      const [relayer, otherAccount] = await ethers.getSigners()
+
+      const amb = await deployMessageBridge();
+      const counter =  await deployCounter(amb.address);
+
+      const amb2 = await deployMessageBridge();
+      const counter2 =  await deployCounter(amb2.address);
+      // set the recieving counter contract to itself for easy test
+      await counter.setReceivingCounter(counter2.address);
+
+      // Send Transaction to queue for external contract
+      await counter.connect(otherAccount).send({value: ethers.utils.parseUnits("0.0002", "ether")});
+
+      // TODO(@ckartik): Make amb interface cleaner and also start using events
+      const data = await amb.getQueueHead();
+    
+      // const value = await data.getValue()
+      // console.log(value);
+      // Increment directly
+      expect(await counter2.getCount()).to.equal(0)
+
+      // Increment through amb proxy
+      await amb2.receive(data)
+      expect(await counter2.getCount()).to.equal(1)
+
+      const balanceT0 = await relayer.getBalance();
+      await amb.consumeFromQueue()
+      const balanceT1 = await relayer.getBalance();
+
+      expect(balanceT1).to.greaterThan(balanceT0);
+      console.log(`${relayer.address} earned ${balanceT1 - balanceT0} wei`)
     });
   });
 });

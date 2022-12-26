@@ -27,7 +27,7 @@ contract Counter {
        counter = 0;
        AMB = _amb;
        owner = msg.sender;
-       minFee = 25 gwei;
+       minFee = 0.0002 ether;
     }
 
 
