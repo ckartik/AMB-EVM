@@ -20,22 +20,20 @@ describe("Counter", function () {
     return counter
   }
 
-  describe("Unit Testing", function () {
-  });
-
   describe("Deployment and Integeration Testing", function () {
     
     it("Should send proxy message through amb on the same chain and contract", async function () {
       
       const amb = await deployMessageBridge();
       const counter =  await deployCounter(amb.address);
-
+      
       // set the recieving counter contract to itself for easy test
       const txn1 = await counter.setReceivingCounter(counter.address);
       await txn1.wait()
       // Send Transaction to queue for external contract
       const txn2 = await counter.send({value: ethers.utils.parseUnits("0.0002", "ether")});
       await txn2.wait()
+
       // TODO(@ckartik): Make amb interface cleaner and also start using events
       const data = (await amb.getQueue())[0]
 
@@ -85,20 +83,20 @@ describe("Counter", function () {
 
       const amb2 = await deployMessageBridge();
       const counter2 =  await deployCounter(amb2.address);
+
       // set the recieving counter contract to itself for easy test
       const txn1 = await counter.setReceivingCounter(counter2.address);
       await txn1.wait()
-
+     
       // Send Transaction to queue for external contract
       const txn2 = await counter.connect(otherAccount).send({value: ethers.utils.parseUnits("0.0002", "ether")});
-      await txn2.wait()
+      const reciept = await txn2.wait()
+
+      
 
       // TODO(@ckartik): Make amb interface cleaner and also start using events
       const data = await amb.getQueueHead();
-      console.log(data)
-      // const value = await data.getValue()
-      // console.log(value);
-      // Increment directly
+    
       expect(await counter2.getCount()).to.equal(0)
 
       // Increment through amb proxy
@@ -108,11 +106,13 @@ describe("Counter", function () {
       expect(await counter2.getCount()).to.equal(1)
 
       const balanceT0 = await relayer.getBalance();
+
       const txn4 = await amb.consumeFromQueue();
       await txn4.wait()
-      const balanceT1 = await relayer.getBalance();
 
+      const balanceT1 = await relayer.getBalance();
       expect(balanceT1).to.greaterThan(balanceT0);
+
       console.log(`${relayer.address} earned ${balanceT1 - balanceT0} wei`)
     });
   });

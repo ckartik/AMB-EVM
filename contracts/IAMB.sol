@@ -19,8 +19,6 @@ interface IAMB {
     function receive(address recipientContract, bytes calldata data) external;
 }
 
- // TODO(@ckartik): Make amb payable with a min fee
- // TODO(@ckartik): Owner should be able to set Trusted Relayer arbitrarily
 contract AMB {
     address TRUSTED_RELAYER;
     address OWNER;
@@ -35,7 +33,9 @@ contract AMB {
        payment = 0.0001 ether;
     }
 
+    // Adding these for dynamic consumption by a Relayer/FE Dapp
     event MessageConsumed(address sender, address reciever, bytes callData);
+    event NotifyRelayer(address sender, address reciever, bytes callData);
 
     modifier onlyRelayer() {
         require(msg.sender == TRUSTED_RELAYER, "NOT_TRUSTED_RELAYER");
@@ -54,12 +54,15 @@ contract AMB {
         TRUSTED_RELAYER = newRelayer;
     }
     
+    // getQueueHead retrieves the top most queued message in the AMB
     function getQueueHead() public view onlyRelayer returns (Message memory) {
         require(queue.length > 0, "QUEUE_EMPTY");
         return queue[0];
     }
 
-    function consumeFromQueue() public onlyRelayer returns (Message memory) {
+    // consumeFromQueue removes the message and pays out the relayer
+    // assumes the trusted relayer has executed the message on a corresponding chain
+    function consumeFromQueue() public onlyRelayer {
         require(queue.length > 0, "QUEUE_EMPTY");
 
         Message memory m;
@@ -67,14 +70,13 @@ contract AMB {
 
         delete queue[0];
         payable(TRUSTED_RELAYER).transfer(payment);
-        console.log("Transfered %s to %s", payment, TRUSTED_RELAYER);
-        // console.log("I GET HERE!!!!");
+
         emit MessageConsumed(m.sender, m.reciever, m.callData);
-        return m;
     }
 
-    // Core implementation
-    // Make payable and add payment for 
+    // send is the interface for a user to send a message cross chain using this amb
+    // it requires the address of the recipient and the data encoding the rquired call 
+    // to the external contract.
     function send(address recipient, bytes calldata data) public payable {        
         require(msg.value >= minFee, "NEED_MORE_ETHER_FOR_TXN");
 
@@ -84,10 +86,11 @@ contract AMB {
             callData: data
         }));
 
-        // TODO: Emit message here
+        emit NotifyRelayer(msg.sender, recipient, data);
     }
 
-    // recieve executes 
+    // recieve executes [message.callData] on the [message.reciever] contract.
+    // the caller must be a trusted relayer.
     function receive(Message calldata message) public onlyRelayer {
         // We want to ensure relayer does not execute arbitrary computation on this contract.
         require(message.reciever != address(this), "FORBIDDEN_ACTION");
