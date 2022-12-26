@@ -30,4 +30,4 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm ci
-    - run: npx hardhat test
+    - run: npx hardhat test --network goerli
