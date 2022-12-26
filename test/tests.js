@@ -91,10 +91,7 @@ describe("Counter", function () {
      
       // Send Transaction to queue for external contract
       const txn2 = await counter.connect(otherAccount).send({value: ethers.utils.parseUnits("0.0002", "ether")});
-      const reciept = await txn2.wait()
-
-      
-
+      await txn2.wait()
 
       const data = await amb.getQueueHead();
     
