@@ -1,50 +1,38 @@
-const {
-  time,
-  loadFixture,
-} = require("@nomicfoundation/hardhat-network-helpers");
-const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("Counter", function () {
-  // We define a fixture to reuse the same setup in every test.
-  // We use loadFixture to run this setup once, snapshot that state,
-  // and reset Hardhat Network to that snapshot in every test.
-  async function deploy() {
-    // Contracts are deployed using the first signer/account by default
-    const [owner, otherAccount] = await ethers.getSigners();
-
+  // Deploys a new AMB and returns an abi wrapped instance to it.
+  async function deployMessageBridge() {
     const AMB = await ethers.getContractFactory("AMB");
     const amb = await AMB.deploy();
 
-    const Counter = await ethers.getContractFactory("Counter");
-    const counter = await Counter.deploy(amb.address);
-
-    return { counter, amb, owner, otherAccount };
+    return amb
   }
 
-  describe("Deployment", function () {
-    it("Should Deploy and Increment", async function () {
-      const { counter, amb ,owner, otherAccount } = await deploy();
-      console.log("Deployed contract to:", counter.address);
-      expect(await counter.getCount()).to.equal(0)
-      await counter.increment()
-      expect(await counter.getCount()).to.equal(1)
+  // deployCounter deploys a counter contract configured to use an AMB deployed to [bridgeAddress] and returns an abi wrapped instance.
+  async function deployCounter(bridgeAddress) {
+    const Counter = await ethers.getContractFactory("Counter");
+    const counter = await Counter.deploy(bridgeAddress);
 
-    });
+    return counter
+  }
 
-    it("Should send a message to increment on same chain & same contract", async function () {
-      const { counter, amb ,owner, otherAccount } = await deploy();
-      console.log("Deployed contract to:", counter.address);
+  describe("Unit Testing", function () {
+  });
+
+  describe("Deployment and Integeration Testing", function () {
+    it("Should send proxy message through amb on the same chain and contract", async function () {
+      const amb = await deployMessageBridge();
+      const counter =  await deployCounter(amb.address);
 
       // set the recieving counter contract to itself for easy test
-      const tx = await counter.setReceivingCounter(counter.address);
-      await tx.wait()
-      console.log(tx)
+      await counter.setReceivingCounter(counter.address);
 
       // Send Transaction to queue for external contract
       await counter.send();
 
+      // TODO(@ckartik): Make amb interface cleaner and also start using events
       const data = (await amb.getQueue())[0]
 
       // We ensure that the relayer will pick up from and increment to the same contract
@@ -58,10 +46,30 @@ describe("Counter", function () {
       // Increment through amb proxy
       await amb.receive(data)
       expect(await counter.getCount()).to.equal(2)
-      
+    })
+
+    it("Should send proxy message through amb on the same chain and but different contract", async function () {
+      const amb = await deployMessageBridge();
+      const counter =  await deployCounter(amb.address);
+
+      const amb2 = await deployMessageBridge();
+      const counter2 =  await deployCounter(amb2.address);
+      // set the recieving counter contract to itself for easy test
+      await counter.setReceivingCounter(counter2.address);
+
+      // Send Transaction to queue for external contract
+      await counter.send();
+
+      // TODO(@ckartik): Make amb interface cleaner and also start using events
+      const data = (await amb.getQueue())[0]
+      // Increment directly
+      expect(await counter2.getCount()).to.equal(0)
+
+      // Increment through amb proxy
+      await amb2.receive(data)
+      expect(await counter2.getCount()).to.equal(1)
     });
   });
-
 });
 
 //     it("Should receive and store the funds to lock", async function () {

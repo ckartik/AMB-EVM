@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 // Uncomment this line to use console.log
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 // TODO:(@ckartik): Implement
 
@@ -19,8 +19,7 @@ interface IAMB {
     function receive(address recipientContract, bytes calldata data) external;
 }
 
-
- // TODO(@ckartik): Make amb payable with a min fee.
+ // TODO(@ckartik): Make amb payable with a min fee
 contract AMB {
     address TRUSTED_RELAYER;
     Message[] queue; 
@@ -44,7 +43,11 @@ contract AMB {
 
     function receive(Message calldata message) public {
         require(msg.sender == TRUSTED_RELAYER, "UNTRUSTED_SENDER");
-        // TOOD: Figure out how to make contract to contract call.
         (bool success, bytes memory data) = message.reciever.call(message.callData);
+        if (success) {
+            console.log("Exectuted proxy command to contract at %s", message.reciever);
+        } else {
+            console.log("Failed proxy execution of command to contract at %s", message.reciever);
+        }
     }
 }
