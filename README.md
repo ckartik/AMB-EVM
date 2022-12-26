@@ -1,7 +1,7 @@
 # AMBCC - Arbitrary Message Bridge for Cross-Chain communication
 
 ## AMB
-- We developed a simple AMB that allows you to send arbitrary encoded commands cross-chain using.
+- We developed a simple AMB that allows you to send arbitrary encoded commands cross-chain.
 - For example you can do the following to exectute a function on a contract at as targetAddress:
 ```solidity
         AMB.send(targetAddress, abi.encodeWithSignature("targetFunc()", "arg1", arg2"...));
